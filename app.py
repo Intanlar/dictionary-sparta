@@ -1,3 +1,7 @@
+import os
+from os.path import join, dirname
+from dotenv import load_dotenv
+
 from flask import (Flask, 
                    request, 
                    render_template, 
@@ -9,13 +13,15 @@ import requests
 from datetime import datetime
 from bson import ObjectId
 
+load_dotenv()
+
+MONGODB_URI = os.getenv("MONGODB_URI")
+DB_NAME = os.getenv("DB_NAME")
+
+client = MongoClient(MONGODB_URI)
+db = client[DB_NAME]
+	
 app = Flask(__name__)
-
-password = 'intan'
-cnx_str = f'mongodb+srv://intanlar:{password}@cluster0.cucheap.mongodb.net/?retryWrites=true&w=majority'
-client = MongoClient(cnx_str)
-
-db = client.dbsparta
 
 @app.route('/')
 def main():
@@ -81,7 +87,9 @@ def save_word():
 @app.route('/api/delete_word', methods=['POST'])
 def delete_word():
     word = request.form.get('word_give')
+    # Hapus kata dari koleksi kata
     db.words.delete_one({'word': word})
+    # Hapus contoh kalimat terkait dari koleksi contoh
     db.examples.delete_many({'word': word})
     return jsonify({
         'result': 'success',
@@ -112,7 +120,7 @@ def save_ex():
     db.examples.insert_one(doc)
     return jsonify({
         'result': 'success',
-        'msg': f'Your example, {example}, for the word {word}, was saved!'
+        'msg': f'Your example, "{example}", for the word "{word}", was saved!'
         })
 
 @app.route('/api/delete_axs', methods=['POST'])
